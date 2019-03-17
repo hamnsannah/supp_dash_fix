@@ -1,3 +1,9 @@
+#was able to get old dash set up with new wt data and supplier.vec. 
+#I disabled the prophet functions because they were useless.
+#I also tested that the dash could work with data aggregated by month (with other fields like Dept too)
+#Next switch it to a Supplier Dashboard that matches the Clara Beau and Firefly PDFs but include the item numbers
+
+
 library(shiny)
 library(lubridate)
 library(dplyr)
@@ -7,7 +13,10 @@ library(dplyr)
 #setwd("D://Users/SPritchard/Music/Documents/R/allocate/whaletale/")
 #data4years <- read.csv("mutated.data.14.17decpart.csv", stringsAsFactors = FALSE)
 #data4years <- read.csv("fake.wt.fixed.csv", stringsAsFactors = FALSE)  # attempting to replace with fake data file
-data4years <- read.csv("fake.compressed.csv", stringsAsFactors = FALSE)  # attempting to replace with fake data file
+#data4years <- read.csv("fake.compressed.csv", stringsAsFactors = FALSE)  # attempting to replace with fake data file
+#data4years <- read.csv("fake.monthly.csv", stringsAsFactors = FALSE)  # attempting to replace with fake data file
+data4years <- read.csv("sales.data.wt.monthly.csv", stringsAsFactors = FALSE)  # attempting to replace with fake data file
+
 
 #data4years <- read.csv("/srv/shiny-server/ab-trail/mutated.data1417.csv", stringsAsFactors = FALSE)
 datatwoyears <- filter(data4years, Year %in% c(2017, 2016))
@@ -192,10 +201,10 @@ shinyServer(
       line.graph.wt(name2, data.object.mutated = data4years)
     })
     
-    output$outputplot3 <- renderPlot({
-      name2 <- input$id7
-      supplier.prophet(name2, data.object.mutated = data4years)
-    })
+    #output$outputplot3 <- renderPlot({
+    #  name2 <- input$id7
+    #  supplier.prophet(name2, data.object.mutated = data4years)
+    #})
     
   }
 )

@@ -19,7 +19,8 @@ library(shiny)
 
 ## fake data for sample version ##
 #setwd("D://Users/SPritchard/Music/Documents/R/supp_dash_fix/")
-supplier.vector <- read.csv("fake.supplier.vec.csv", stringsAsFactors = FALSE)
+#supplier.vector <- read.csv("fake.supplier.vec.csv", stringsAsFactors = FALSE)
+supplier.vector <- read.csv("wt.supplier.vec.csv", stringsAsFactors = FALSE)
 
 supplier.vector 
 
@@ -40,8 +41,8 @@ shinyUI(pageWithSidebar(
     plotOutput("outputagg.cat", height = 500, width = 600),
     #h3('Overall Shape of Sales Each Year'),
     plotOutput("outputplot1", height = 500, width = 600),
-    h4('Seasonality Trends for Supplier'),
-    plotOutput("outputplot3", height = 800, width = 600)
+    h4('Seasonality Trends for Supplier')
+    #plotOutput("outputplot3", height = 800, width = 600)
     #h4('Comparison of Sales By Category 17 vs. 16'),
     #h4('Comparison of Sales For Supplier Top 25 Items')
   )
