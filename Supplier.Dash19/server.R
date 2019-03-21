@@ -6,6 +6,8 @@
       #category kables by dollars and units
       #top products horizontal bar chart
       #top products kable WITH ITEM NUMBERS to aid in ordering (Need to think about full year vs. YTD)
+#3/20/19 Got scripts for the units kable and dollar kable working 100%.  Need to add to server.R and adjust ui.R
+#Most of the way there with product.facet.R but not confident in filtering because too many facets missing lines, ergo probably not top 10
 
 library(shiny)
 library(lubridate)
