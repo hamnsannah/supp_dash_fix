@@ -335,9 +335,20 @@ prelim.wt.cat.lines <- function(agg.data, supplier.name){
 #shiny app
 shinyServer(
   function(input, output){
-
     
-    #output$oid1 <- renderPrint({input$id1})
+    filtered.reactive <- reactive({
+      supplier.name <- input$id7
+      supplier.data <- filter(data4years, Supplier == supplier.name)
+    })
+    
+    ts.reactive <- reactive({
+      filt.data <- filtered.reactive()
+      filtered.ts <- exploratory.jh.time.series(filt.data, freq = 12)
+      #supplier.name <- input$id7
+      #supplier.data <- filter(data4years, Supplier == supplier.name)
+    })
+
+      #output$oid1 <- renderPrint({input$id1})
     #output$oid2 <- renderPrint({input$id2})
     #output$oid3 <- renderPrint({input$id3})
     #output$oid4 <- renderPrint({
@@ -354,45 +365,51 @@ shinyServer(
     })
     
     output$output.bar <- renderPlot({
-      supplier.name <- input$id7
-      filtered.data <- filter(data4years, Supplier == supplier.name)
-      filtered.ts <- exploratory.jh.time.series(filtered.data, freq = 12)
-      gg.list <- prelim.wt.multicolor.line(filtered.data, filtered.ts, unique(filtered.data$Year))
+      #supplier.name <- input$id7
+      filt.data <- filtered.reactive()
+      filt.ts <- ts.reactive()
+      #filtered.data <- filter(data4years, Supplier == supplier.name)
+      #filtered.ts <- exploratory.jh.time.series(filt.data, freq = 12)
+      gg.list <- prelim.wt.multicolor.line(filt.data, filt.ts, unique(filt.data$Year))
       gg.list[1]
       
 
     })
     
     output$output.line <- renderPlot({
-    supplier.name <- input$id7
-    filtered.data <- filter(data4years, Supplier == supplier.name)
-    filtered.ts <- exploratory.jh.time.series(filtered.data, freq = 12)
-    gg.list <- prelim.wt.multicolor.line(filtered.data, filtered.ts, unique(filtered.data$Year))
-    gg.list[2]
+    #supplier.name <- input$id7
+    #filtered.data <- filter(data4years, Supplier == supplier.name)
+    
+      filt.data <- filtered.reactive()
+      filt.ts <- ts.reactive()
+      #filtered.ts <- exploratory.jh.time.series(filt.data, freq = 12)
+      gg.list <- prelim.wt.multicolor.line(filt.data, filt.ts, unique(filt.data$Year))
+      gg.list[2]
     })
     
     output$output.cats <- renderPlot({
+      filt.data <- filtered.reactive()
       supplier.name <- input$id7
-      filtered.data <- filter(data4years, Supplier == supplier.name)
+      #filtered.data <- filter(data4years, Supplier == supplier.name)
       
-      prelim.wt.cat.lines(filtered.data, supplier.name)
+      prelim.wt.cat.lines(filt.data, supplier.name)
 
     })
     
-    output$outputagg.all <- renderPlot({
-      name2 <- input$id7
-      supplier.bar.yy(name2, data.object.mutated = data4years)
-    })
+    #output$outputagg.all <- renderPlot({
+    #  name2 <- input$id7
+    #  supplier.bar.yy(name2, data.object.mutated = data4years)
+    #})
     
-    output$outputagg.cat <- renderPlot({
-      name2 <- input$id7
-      supplier.cat.bar.yy(name2, data.object.mutated = datatwoyears)
-    })
+    #output$outputagg.cat <- renderPlot({
+    #  name2 <- input$id7
+    #  supplier.cat.bar.yy(name2, data.object.mutated = datatwoyears)
+    #})
     
-    output$outputplot1 <- renderPlot({
-      name2 <- input$id7
-      line.graph.wt(name2, data.object.mutated = data4years)
-    })
+    #output$outputplot1 <- renderPlot({
+    #  name2 <- input$id7
+    #  line.graph.wt(name2, data.object.mutated = data4years)
+    #})
     
     #output$outputplot3 <- renderPlot({
     #  name2 <- input$id7
