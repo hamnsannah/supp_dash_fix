@@ -16,6 +16,6 @@ kable.cat.dollar <- function(filtered.data){
   
   #colnames(cat.kable.dollar) <- c("Category", cat.year.vec)
   cat.kable.dollar[is.na(cat.kable.dollar)] <- 0
-  cat.kable.dollar <- kable(cat.kable.dollar)
+  cat.kable.dollar <- (cat.kable.dollar)
   cat.kable.dollar
 }

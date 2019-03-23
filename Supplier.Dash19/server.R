@@ -1,19 +1,14 @@
 #was able to get old dash set up with new wt data and supplier.vec. 
 #I disabled the prophet functions because they were useless.
-#I also tested that the dash could work with data aggregated by month (with other fields like Dept too)
-#Next switch it to a Supplier Dashboard that matches the Clara Beau and Firefly PDFs but include the item numbers
-  # Got first three plots in but still need 
-      #category kables by dollars and units
-      #top products horizontal bar chart
-      #top products kable WITH ITEM NUMBERS to aid in ordering (Need to think about full year vs. YTD)
-#3/20/19 Got scripts for the units kable and dollar kable working 100%.  Need to add to server.R and adjust ui.R
 #Most of the way there with product.facet.R but not confident in filtering because too many facets missing lines, ergo probably not top 10
+# ^ still an issue.  Note that been changing functions in Shiny but not in original source file, so fix that.
 
 library(shiny)
 library(lubridate)
 library(dplyr)
 library(ggplot2)
 library(fpp2)
+library(knitr)
 
 #read in data
 
@@ -331,6 +326,90 @@ prelim.wt.cat.lines <- function(agg.data, supplier.name){
   cats.line
 }
 
+kable.cat.dollar <- function(filtered.data){
+  require(knitr)
+  cat.dollar <- aggregate(Total.Sales ~ Categ.By.Year + Category + Year, filtered.data, sum)
+  cat.dollar <- arrange(cat.dollar, desc(Year))
+  cat.year.vec <- unique(cat.dollar$Year)
+  cat.kable.dollar <- data.frame("Category" = unique(cat.dollar$Category))
+  
+  for(i in 1:length(cat.year.vec)){
+    cat.dollar.i <- cat.dollar %>% filter(Year == cat.year.vec[i]) %>% select(2,4)#%>% rename("2018" = Total.Sales)
+    colnames(cat.dollar.i)[2] <- cat.year.vec[i]
+    cat.dollar.i[,2] <- paste0("$", prettyNum(round(cat.dollar.i[,2]), big.mark = ","))
+    cat.kable.dollar <- full_join(cat.kable.dollar, cat.dollar.i)
+    #paste0("$",prettyNum(round(cat.agg.pretty$`Total.Sales`), big.mark = ","))
+    
+  }
+  
+  #colnames(cat.kable.dollar) <- c("Category", cat.year.vec)
+  cat.kable.dollar[is.na(cat.kable.dollar)] <- 0
+  cat.kable.dollar <- (cat.kable.dollar)
+  cat.kable.dollar
+}
+
+kable.cat.unit <- function(filtered.data){
+  require(knitr)
+  cat.unit <- aggregate(Total.Sales ~ Categ.By.Year + Category + Year, filtered.data, length)
+  cat.unit <- arrange(cat.unit, desc(Year))
+  cat.year.vec <- unique(cat.unit$Year)
+  cat.kable.unit <- data.frame("Category" = unique(cat.unit$Category))
+  
+  for(i in 1:length(cat.year.vec)){
+    cat.unit.i <- cat.unit %>% filter(Year == cat.year.vec[i]) %>% select(2,4)#%>% rename("2018" = Total.Sales)
+    cat.unit.i[,2] <- round(cat.unit.i[,2])
+    colnames(cat.unit.i)[2] <- cat.year.vec[i]
+    cat.kable.unit <- full_join(cat.kable.unit, cat.unit.i)
+    
+  }
+  
+  #colnames(cat.kable.unit) <- c("Category", cat.year.vec)
+  cat.kable.unit[is.na(cat.kable.unit)] <- 0
+  cat.kable.unit <- (cat.kable.unit)
+  cat.kable.unit
+}
+
+product.facet <- function(filtered.data, freemium.end.date){
+  data.dive <- filtered.data
+  data.dive$Product.By.Year <- paste(data.dive$Description, data.dive$Year)
+  product.agg <- aggregate(Total.Sales ~ Product.By.Year + Description + Year, data.dive, sum)
+  
+  cy <- year(freemium.end.date)
+  py <- year(freemium.end.date)-1
+  product.agg.cy <- filter(product.agg, Year == cy)
+  product.cy.sum <- sum(product.agg.cy$Total.Sales)
+  product.agg.cy <- mutate(product.agg.cy, "Perc.Whole" = round((Total.Sales/product.cy.sum)*100, 2))
+  product.agg.cy <- arrange(product.agg.cy, desc(Total.Sales))
+  
+  product.agg.cy <- rename(product.agg.cy, "Product" = Description)
+  product.agg.py <- filter(product.agg, Year == py)
+  product.merge.py <- product.agg.py[,c(2,4)]
+  colnames(product.merge.py) <- c("Product", "Prior Yr")
+  product.merge <- merge(product.agg.cy, product.merge.py, by.x="Product", all.x=TRUE, all.y=FALSE)
+  product.merge <- mutate(product.merge, "Growth" = Total.Sales - `Prior Yr`, "Perc.Growth" = 
+                            paste0(round((Growth/`Prior Yr`)*100,1),"%")) %>%
+    arrange(desc(Total.Sales)) %>%
+    select(1,4:8)
+  colnames(product.merge)[c(2,4)] <- c("Sales Current Yr", "Sales Prior Yr")
+  product.merge[is.na(product.merge)] <- 0
+  product.agg.18.vec <- product.agg %>% filter(Year == year(freemium.end.date)) %>%
+    arrange(desc(Total.Sales)) %>%
+    select(Description, Total.Sales)
+  
+  how.many.in.top <- 12 #select how many should be in plot, contingent on # of years
+  product.top.cy.vec <- unique(product.agg.18.vec$Description)[1:how.many.in.top]
+  product.agg.top <- product.agg[product.agg$Description %in% product.top.cy.vec,]
+  
+  gfacet <- ggplot(data = product.agg.top, aes(x = Year, y = Total.Sales, group = Description))+ geom_line(color = "white", size = 3) + 
+    facet_wrap(~Description) + theme_dark()
+  
+  #g <- ggplot(data = product.agg.top, aes(x = Product.By.Year, fill = factor(Year))) + 
+  #geom_bar(stat = "identity", aes(y = Total.Sales)) + coord_flip() +
+  #scale_y_continuous(labels = scales::dollar) +
+  #scale_fill_brewer(direction = 1, palette = "RdBu", name = "Year") + theme_dark() + 
+  #labs(title = "Sales From Top Products By Year", y = "Total Sales", x = "Product By Year") 
+  (gfacet)
+}
 
 #shiny app
 shinyServer(
@@ -396,6 +475,31 @@ shinyServer(
 
     })
     
+    output$dollar.kable <- renderTable({
+      filt.data <- filtered.reactive()
+      kable.cat.dollar(filt.data)
+      
+      #name2 <- input$id7
+      #supplier.kable(name2, data.object.mutated = datatwoyears)
+    })
+    
+    output$unit.kable <- renderTable({
+      filt.data <- filtered.reactive()
+      kable.cat.unit(filt.data)
+    })
+    
+    output$facet.line <- renderPlot({
+      #supplier.name <- input$id7
+      #filtered.data <- filter(data4years, Supplier == supplier.name)
+      
+      filt.data <- filtered.reactive()
+      #filt.ts <- ts.reactive()
+      pfac <- product.facet(filt.data, freemium.end.date = date("2018-12-31"))
+      #filtered.ts <- exploratory.jh.time.series(filt.data, freq = 12)
+      #gg.list <- prelim.wt.multicolor.line(filt.data, filt.ts, unique(filt.data$Year))
+      #gg.list[2]
+      pfac
+    })
     #output$outputagg.all <- renderPlot({
     #  name2 <- input$id7
     #  supplier.bar.yy(name2, data.object.mutated = data4years)

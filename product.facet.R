@@ -20,6 +20,7 @@ product.facet <- function(filtered.data, freemium.end.date){
     select(1,4:8)
   colnames(product.merge)[c(2,4)] <- c("Sales Current Yr", "Sales Prior Yr")
   product.merge[is.na(product.merge)] <- 0
+  product.merge <- arrange(product.merge, desc(Total.Sales))
   
   how.many.in.top <- 10 #select how many should be in plot, contingent on # of years
   product.top.cy.vec <- unique(product.merge$Product)[1:how.many.in.top]
@@ -33,5 +34,5 @@ product.facet <- function(filtered.data, freemium.end.date){
     #scale_y_continuous(labels = scales::dollar) +
     #scale_fill_brewer(direction = 1, palette = "RdBu", name = "Year") + theme_dark() + 
     #labs(title = "Sales From Top Products By Year", y = "Total Sales", x = "Product By Year") 
-  print(gfacet)
+  (gfacet)
 }
