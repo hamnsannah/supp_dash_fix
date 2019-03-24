@@ -23,6 +23,8 @@ data4years <- filter(data4years, Year >= 2015)
 #data4years <- read.csv("/srv/shiny-server/ab-trail/mutated.data1417.csv", stringsAsFactors = FALSE)
 datatwoyears <- filter(data4years, Year %in% c(2017, 2016))
 
+freemium.end.date <- date("2018-12-31")
+
 #read in functions
 
 supplier.kable <- function(name, hierarchy = "Supplier", data.object.mutated){
@@ -357,7 +359,7 @@ kable.cat.unit <- function(filtered.data){
   
   for(i in 1:length(cat.year.vec)){
     cat.unit.i <- cat.unit %>% filter(Year == cat.year.vec[i]) %>% select(2,4)#%>% rename("2018" = Total.Sales)
-    cat.unit.i[,2] <- round(cat.unit.i[,2])
+    cat.unit.i[,2] <- paste0(" ", prettyNum(round(cat.unit.i[,2]), big.mark = ","))
     colnames(cat.unit.i)[2] <- cat.year.vec[i]
     cat.kable.unit <- full_join(cat.kable.unit, cat.unit.i)
     
@@ -365,7 +367,7 @@ kable.cat.unit <- function(filtered.data){
   
   #colnames(cat.kable.unit) <- c("Category", cat.year.vec)
   cat.kable.unit[is.na(cat.kable.unit)] <- 0
-  cat.kable.unit <- (cat.kable.unit)
+  #cat.kable.unit <- (cat.kable.unit)
   cat.kable.unit
 }
 
@@ -375,23 +377,7 @@ product.facet <- function(filtered.data, freemium.end.date){
   product.agg <- aggregate(Total.Sales ~ Product.By.Year + Description + Year, data.dive, sum)
   
   cy <- year(freemium.end.date)
-  py <- year(freemium.end.date)-1
-  product.agg.cy <- filter(product.agg, Year == cy)
-  product.cy.sum <- sum(product.agg.cy$Total.Sales)
-  product.agg.cy <- mutate(product.agg.cy, "Perc.Whole" = round((Total.Sales/product.cy.sum)*100, 2))
-  product.agg.cy <- arrange(product.agg.cy, desc(Total.Sales))
   
-  product.agg.cy <- rename(product.agg.cy, "Product" = Description)
-  product.agg.py <- filter(product.agg, Year == py)
-  product.merge.py <- product.agg.py[,c(2,4)]
-  colnames(product.merge.py) <- c("Product", "Prior Yr")
-  product.merge <- merge(product.agg.cy, product.merge.py, by.x="Product", all.x=TRUE, all.y=FALSE)
-  product.merge <- mutate(product.merge, "Growth" = Total.Sales - `Prior Yr`, "Perc.Growth" = 
-                            paste0(round((Growth/`Prior Yr`)*100,1),"%")) %>%
-    arrange(desc(Total.Sales)) %>%
-    select(1,4:8)
-  colnames(product.merge)[c(2,4)] <- c("Sales Current Yr", "Sales Prior Yr")
-  product.merge[is.na(product.merge)] <- 0
   product.agg.18.vec <- product.agg %>% filter(Year == year(freemium.end.date)) %>%
     arrange(desc(Total.Sales)) %>%
     select(Description, Total.Sales)
@@ -400,15 +386,58 @@ product.facet <- function(filtered.data, freemium.end.date){
   product.top.cy.vec <- unique(product.agg.18.vec$Description)[1:how.many.in.top]
   product.agg.top <- product.agg[product.agg$Description %in% product.top.cy.vec,]
   
-  gfacet <- ggplot(data = product.agg.top, aes(x = Year, y = Total.Sales, group = Description))+ geom_line(color = "white", size = 3) + 
+  gfacet <- ggplot(data = product.agg.top, aes(x = Year, y = Total.Sales, group = Description))+ 
+    geom_line(color = "white", size = 3) + geom_point(color = "white", size = 3) +
     facet_wrap(~Description) + theme_dark()
-  
-  #g <- ggplot(data = product.agg.top, aes(x = Product.By.Year, fill = factor(Year))) + 
-  #geom_bar(stat = "identity", aes(y = Total.Sales)) + coord_flip() +
-  #scale_y_continuous(labels = scales::dollar) +
-  #scale_fill_brewer(direction = 1, palette = "RdBu", name = "Year") + theme_dark() + 
-  #labs(title = "Sales From Top Products By Year", y = "Total Sales", x = "Product By Year") 
+
   (gfacet)
+}
+
+product.table <- function(filtered.data, freemium.end.date, num.to.include){
+  data.dive <- filtered.data
+  data.dive$Product.By.Year <- paste(data.dive$Description, data.dive$Year)
+  product.agg <- aggregate(Total.Sales ~ Product.By.Year + Description + Year + ItemID, data.dive, sum)
+  product.agg <- mutate(product.agg, "Product" = paste0(Description, " (",ItemID,")"))
+  
+  cy <- year(freemium.end.date)
+  py <- year(freemium.end.date)-1
+  product.agg.cy <- filter(product.agg, Year == cy)
+  product.cy.sum <- sum(product.agg.cy$Total.Sales)
+  product.agg.cy <- mutate(product.agg.cy, "Perc.Whole" = round((Total.Sales/product.cy.sum)*100, 2))
+  product.agg.cy <- arrange(product.agg.cy, desc(Total.Sales))
+  
+  #product.agg.cy <- mutate(product.agg.cy, "Product" = paste0(Description, " (",ItemID,")"))
+  product.agg.py <- filter(product.agg, Year == py)
+  product.merge.py <- product.agg.py[,c(6,5)]
+  colnames(product.merge.py) <- c("Product", "Prior Yr")
+  product.merge <- merge(product.agg.cy, product.merge.py, by.x="Product", all.x=TRUE, all.y=FALSE)
+  product.merge <- mutate(product.merge, "Growth" = Total.Sales - `Prior Yr`, "Perc.Growth" = 
+                            paste0(round((Growth/`Prior Yr`)*100,1),"%")) %>%
+    arrange(desc(Total.Sales)) %>%
+    select(1,6:10)
+  colnames(product.merge)[c(2,4)] <- c("Sales Current Yr", "Sales Prior Yr")
+  product.merge[is.na(product.merge)] <- 0
+  
+  product.agg.cy.vec <- product.agg %>% filter(Year == year(freemium.end.date)) %>%
+    arrange(desc(Total.Sales)) %>%
+    select(Description, Total.Sales)
+  
+  #how.many.in.top <- 12 #select how many should be in plot, contingent on # of years
+  #product.top.cy.vec <- unique(product.agg.cy.vec$Description)[1:how.many.in.top]
+  #product.agg.top <- product.agg[product.agg$Description %in% product.top.cy.vec,]
+  
+  how.many.in.top <- num.to.include
+  product.agg.cy.pretty <- product.merge
+  product.agg.cy.pretty$Perc.Whole <- paste0(product.agg.cy.pretty$Perc.Whole, "%")
+  product.agg.cy.pretty$Growth <- paste0("$",prettyNum(round(product.agg.cy.pretty$Growth), big.mark = ","))
+  product.agg.cy.pretty$`Sales Prior Yr` <- paste0("$",prettyNum(round(product.agg.cy.pretty$`Sales Prior Yr`), big.mark = ","))
+  product.agg.cy.pretty$`Sales Current Yr` <- paste0("$",prettyNum(round(product.agg.cy.pretty$`Sales Current Yr`), big.mark = ",")) ## Switch back
+  if(nrow(product.agg.cy.pretty) < how.many.in.top){
+    kable.products <- product.agg.cy.pretty
+  } else {
+    kable.products <- product.agg.cy.pretty[1:how.many.in.top,]
+  }
+  kable.products
 }
 
 #shiny app
@@ -494,12 +523,18 @@ shinyServer(
       
       filt.data <- filtered.reactive()
       #filt.ts <- ts.reactive()
-      pfac <- product.facet(filt.data, freemium.end.date = date("2018-12-31"))
+      pfac <- product.facet(filt.data, freemium.end.date = freemium.end.date)
       #filtered.ts <- exploratory.jh.time.series(filt.data, freq = 12)
       #gg.list <- prelim.wt.multicolor.line(filt.data, filt.ts, unique(filt.data$Year))
       #gg.list[2]
       pfac
     })
+    
+    output$product.table <- renderTable({
+      filt.data <- filtered.reactive()
+      prod.t <- product.table(supplier.data, freemium.end.date = freemium.end.date, num.to.include = 100)
+    })
+    
     #output$outputagg.all <- renderPlot({
     #  name2 <- input$id7
     #  supplier.bar.yy(name2, data.object.mutated = data4years)

@@ -42,7 +42,8 @@ shinyUI(pageWithSidebar(
     plotOutput("output.cats",height = 500, width = 600),
     tableOutput("dollar.kable"),
     tableOutput("unit.kable"),
-    plotOutput("facet.line", height = 500, width = 600)
+    plotOutput("facet.line", height = 500, width = 600),
+    tableOutput("product.table")
     #plotOutput("outputagg.all", height = 500, width = 600),
     #plotOutput("outputagg.cat", height = 500, width = 600),
     #h3('Overall Shape of Sales Each Year'),
