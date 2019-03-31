@@ -30,7 +30,11 @@ shinyUI(pageWithSidebar(
   sidebarPanel(
     #h3('Enter Market and Test Date Here'),
     selectInput('id7', 'Supplier Name', choices = supplier.vector, selected = "ACOMO JEWELRY"),
-    h5('This dashboard first has a summary table at the top followed by multiple views of the sales of the selected supplier.  
+    selectInput('id8','Select How Years Are Compared', choices = c("Year-To-Date vs. Full Prior Year", 
+                                                                "Year-To-Date vs. Year-To-Date Prior Year", 
+                                                                "Last Full Year vs. Prior Year")),
+
+h5('This dashboard first has a summary table at the top followed by multiple views of the sales of the selected supplier.  
        As occasions arise to evaluate or re-evaluate suppliers, this can inform decisions about when to give more or less prominence to a supplier or some of its product categories.')
     
   ),

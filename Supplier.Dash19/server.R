@@ -1,3 +1,5 @@
+#need to keep working supplier.summary.table.R this to receive the output from yy.filter
+
 #was able to get old dash set up with new wt data and supplier.vec. 
 #I disabled the prophet functions because they were useless.
 #Most of the way there with product.facet.R but not confident in filtering because too many facets missing lines, ergo probably not top 10
@@ -146,29 +148,34 @@ line.graph.wt <- function(name, hierarchy = "Supplier", data.object.mutated){
   print(supp.plot.t)
 }
 
-supplier.prophet <- function(supplier.name, data.object.mutated){
-  library(prophet)
-  require(dplyr)
-  require(ggplot2)
+#2019 functions to read in
+yy.filter <- function(yy.filter.input, data.to.use){
   require(lubridate)
+  data.to.use$Date.Sold <- date(data.to.use$Date.Sold)
+  max.data.date <- max(data.to.use$Date.Sold)
   
-  data.both <- data.object.mutated
-  #data.both <- filter(data.object.mutated, Year %in% c(2016, 2017))
-  data.both$Date <- as_date(data.both$Date.Sold)
-  data.date.agg <- aggregate(Total.Sales ~ Date + Supplier, data.both, sum)
-  colnames(data.date.agg) <- c("ds", "Supplier", "y")
-  #print(head(data.date.agg))
-  prophet.data <- filter(data.date.agg, Supplier == supplier.name)
-  #print(head(prophet.data, 10))
-  prophet.data <- select(prophet.data, ds, y)
-  model <- prophet(prophet.data, yearly.seasonality = TRUE)
-  future <- make_future_dataframe(model, periods = 365)
-  forecast <- predict(model, future)
-  prophet.plot.obj <- prophet_plot_components(model, forecast)
-  #print(prophet.plot.obj)
+  if(yy.filter.input == "Year-To-Date vs. Full Prior Year"){
+    df.cy <- filter(data.to.use, Date.Sold >= floor_date(max.data.date, unit = "years"))
+    df.py <- filter(data.to.use, Date.Sold >= (floor_date(max.data.date, unit = "years")-years(1)), 
+                    Date.Sold <= (floor_date(max.data.date, unit = "years")-days(1)))
+    yy.df <- rbind(df.cy, df.py)
+    
+  }else if(yy.filter.input == "Year-To-Date vs. Year-To-Date Prior Year"){ #done
+    df.cy <- filter(data.to.use, Date.Sold >= floor_date(max.data.date, unit = "years"))
+    df.py <- filter(data.to.use, Date.Sold >= floor_date((max.data.date - years(1)), unit = "years"),
+                    Date.Sold <= (max.data.date - years(1)))
+    yy.df <- rbind(df.cy, df.py)
+    
+  }else if(yy.filter.input == "Last Full Year vs. Prior Year"){
+    df.cy <- filter(data.to.use, Date.Sold >= (floor_date(max.data.date, unit = "years")-years(1)), 
+                    Date.Sold <= (floor_date(max.data.date, unit = "years")-days(1)))
+    df.py <- filter(data.to.use, Date.Sold >= floor_date((max.data.date - years(2)), unit = "years"),
+                    Date.Sold <= (max.data.date - years(1) - days(1)))
+    yy.df <- rbind(df.cy, df.py)
+  }
+  yy.df
 }
 
-#2019 functions to read in
 exploratory.jh.time.series <- function(clean.df, freq = 365){
   # includes day, week, and year frequency options
   if(freq == 52){print("Error: use freq = 53 for weekly to account for partial week at EOY")}
@@ -456,16 +463,6 @@ shinyServer(
       #supplier.data <- filter(data4years, Supplier == supplier.name)
     })
 
-      #output$oid1 <- renderPrint({input$id1})
-    #output$oid2 <- renderPrint({input$id2})
-    #output$oid3 <- renderPrint({input$id3})
-    #output$oid4 <- renderPrint({
-    #  if(input$id3 == TRUE){
-    #    (input$id1)*(input$id2)*100
-    #  } else{
-    #    (input$id1)*(input$id2)
-    #  }
-    #})
     #### use the scripts ####
     output$output.table <- renderTable({
       name2 <- input$id7
@@ -532,7 +529,7 @@ shinyServer(
     
     output$product.table <- renderTable({
       filt.data <- filtered.reactive()
-      prod.t <- product.table(supplier.data, freemium.end.date = freemium.end.date, num.to.include = 100)
+      prod.t <- product.table(filt.data, freemium.end.date = freemium.end.date, num.to.include = 100)
     })
     
     #output$outputagg.all <- renderPlot({
