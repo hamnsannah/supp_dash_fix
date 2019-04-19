@@ -41,6 +41,7 @@ h5('This dashboard first has a summary table at the top followed by multiple vie
   mainPanel(
     h3('Analysis of Selected Supplier'),
     tableOutput("output.table"),
+    tableOutput("output.table.adaptive"),
     plotOutput("output.bar", height = 500, width = 600),
     plotOutput("output.line",height = 500, width = 600),
     plotOutput("output.cats",height = 500, width = 600),

@@ -1,11 +1,11 @@
-product.table <- function(filtered.data, freemium.end.date, num.to.include){
+product.table <- function(filtered.data, num.to.include){
   data.dive <- filtered.data
   data.dive$Product.By.Year <- paste(data.dive$Description, data.dive$Year)
   product.agg <- aggregate(Total.Sales ~ Product.By.Year + Description + Year + ItemID, data.dive, sum)
   product.agg <- mutate(product.agg, "Product" = paste0(Description, " (",ItemID,")"))
   
-  cy <- year(freemium.end.date)
-  py <- year(freemium.end.date)-1
+  cy <- year(max(filtered.data$Date.Sold))
+  py <- cy-1
   product.agg.cy <- filter(product.agg, Year == cy)
   product.cy.sum <- sum(product.agg.cy$Total.Sales)
   product.agg.cy <- mutate(product.agg.cy, "Perc.Whole" = round((Total.Sales/product.cy.sum)*100, 2))
@@ -23,7 +23,7 @@ product.table <- function(filtered.data, freemium.end.date, num.to.include){
   colnames(product.merge)[c(2,4)] <- c("Sales Current Yr", "Sales Prior Yr")
   product.merge[is.na(product.merge)] <- 0
   
-  product.agg.cy.vec <- product.agg %>% filter(Year == year(freemium.end.date)) %>%
+  product.agg.cy.vec <- product.agg %>% filter(Year == cy) %>%
     arrange(desc(Total.Sales)) %>%
     select(Description, Total.Sales)
   
