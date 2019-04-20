@@ -34,20 +34,26 @@ shinyUI(pageWithSidebar(
                                                                 "Year-To-Date vs. Year-To-Date Prior Year", 
                                                                 "Last Full Year vs. Prior Year")),
 
-h5('This dashboard first has a summary table at the top followed by multiple views of the sales of the selected supplier.  
-       As occasions arise to evaluate or re-evaluate suppliers, this can inform decisions about when to give more or less prominence to a supplier or some of its product categories.')
+h5('This dashboard provides multiple views of the sales of the selected supplier.  
+       It shows whether a supplier is outperforming or underperforming prior years and which categories and products are driving that trend.')
     
   ),
   mainPanel(
     h3('Analysis of Selected Supplier'),
-    tableOutput("output.table"),
     tableOutput("output.table.adaptive"),
+    h4('Sales from Selected Supplier by Year'),
     plotOutput("output.bar", height = 500, width = 600),
+    h4('Sales from Selected Supplier by Month'),
     plotOutput("output.line",height = 500, width = 600),
+    h4('Sales from Selected Supplier by Category'),
     plotOutput("output.cats",height = 500, width = 600),
+    h4('Sales Dollars by Category'),
     tableOutput("dollar.kable"),
+    h4('Units Sold by Category'),
     tableOutput("unit.kable"),
+    h4('Trend of Top Products in Current Year'),
     plotOutput("facet.line", height = 500, width = 600),
+    h4('Performance of Top Products Year Over Year'),
     tableOutput("product.table")
     #plotOutput("outputagg.all", height = 500, width = 600),
     #plotOutput("outputagg.cat", height = 500, width = 600),

@@ -3,7 +3,8 @@ product.facet <- function(filtered.data, freemium.end.date){
   data.dive$Product.By.Year <- paste(data.dive$Description, data.dive$Year)
   product.agg <- aggregate(Total.Sales ~ Product.By.Year + Description + Year, data.dive, sum)
   
-  cy <- year(freemium.end.date)
+  cy <- year(max(filtered.data$Date.Sold))
+  
   #py <- year(freemium.end.date)-1
   #product.agg.cy <- filter(product.agg, Year == cy)
   #product.cy.sum <- sum(product.agg.cy$Total.Sales)
@@ -22,12 +23,12 @@ product.facet <- function(filtered.data, freemium.end.date){
   #colnames(product.merge)[c(2,4)] <- c("Sales Current Yr", "Sales Prior Yr")
   #product.merge[is.na(product.merge)] <- 0
   
-  product.agg.18.vec <- product.agg %>% filter(Year == year(freemium.end.date)) %>%
+  product.agg.cy.vec <- product.agg %>% filter(Year == cy) %>%
     arrange(desc(Total.Sales)) %>%
     select(Description, Total.Sales)
   
   how.many.in.top <- 12 #select how many should be in plot, contingent on # of years
-  product.top.cy.vec <- unique(product.agg.18.vec$Description)[1:how.many.in.top]
+  product.top.cy.vec <- unique(product.agg.cy.vec$Description)[1:how.many.in.top]
   product.agg.top <- product.agg[product.agg$Description %in% product.top.cy.vec,]
   
   gfacet <- ggplot(data = product.agg.top, aes(x = Year, y = Total.Sales, group = Description))+ 
