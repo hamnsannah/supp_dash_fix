@@ -25,7 +25,7 @@ data4years <- filter(data4years, Year >= 2015)
 #data4years <- read.csv("/srv/shiny-server/ab-trail/mutated.data1417.csv", stringsAsFactors = FALSE)
 #datatwoyears <- filter(data4years, Year %in% c(2017, 2016))
 
-freemium.end.date <- date("2018-12-30")
+freemium.end.date <- date("2019-04-30")
 data4years <- filter(data4years, Date.Sold <= freemium.end.date)
 #read in functions
 
